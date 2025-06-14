@@ -1,0 +1,33 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>AutoBuy NFT via Telegram</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    #status, #debug { margin-top: 20px; font-size: 1.1em; }
+    code, pre { background-color: #eee; padding: 4px; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <h2>AutoBuy NFT via Telegram</h2>
+  <div id="status">⏳ Waiting for initData...</div>
+  <pre id="debug">🧪 Debug info will appear here...</pre>
+
+  <script>
+    const status = document.getElementById("status");
+    const debug = document.getElementById("debug");
+
+    const initData = window.Telegram?.WebApp?.initData;
+
+    debug.textContent = "🧪 initData: " + initData;
+
+    if (!initData) {
+      status.innerHTML = "❌ <b>initData not found</b>. Відкрий через Telegram бота.";
+    } else {
+      status.innerHTML = "✅ initData знайдено. Можна надсилати запит.";
+    }
+  </script>
+</body>
+</html>
