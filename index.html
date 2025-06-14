@@ -2,113 +2,68 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Manual AutoBuy NFT with Validation</title>
+  <meta charset="UTF-8" />
+  <title>AutoBuy NFT via Telegram</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
-    input, select, button { width: 100%; padding: 10px; margin: 10px 0; }
-    .error { color: red; }
-    .success { color: green; }
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    #status { margin-top: 20px; font-size: 1.1em; }
+    code { background-color: #eee; padding: 2px 4px; border-radius: 3px; }
   </style>
 </head>
 <body>
-  <h2>🛒 Manual AutoBuy NFT (with Token Validation)</h2>
-
-  <label for="token">🔐 Bearer / initData Token:</label>
-  <input type="text" id="token" placeholder="Встав сюди актуальний токен" oninput="checkToken()">
-  <div id="tokenStatus"></div>
-
-  <label for="collection">🗂️ Collection ID:</label>
-  <input type="number" id="collection" value="2">
-
-  <label for="character">👾 Character ID:</label>
-  <input type="number" id="character" value="19">
-
-  <label for="currency">💱 Currency:</label>
-  <select id="currency">
-    <option value="USDT" selected>USDT</option>
-    <option value="TON">TON</option>
-  </select>
-
-  <label for="count">🎟️ Count:</label>
-  <input type="number" id="count" value="1">
-
-  <button onclick="buy()">🚀 Купити NFT</button>
-
-  <p id="status">🕓 Очікування дії...</p>
+  <h2>AutoBuy NFT via Telegram</h2>
+  <div id="status">⏳ Waiting for initData...</div>
 
   <script>
-    function validateJWT(token) {
-      const parts = token.split('.');
-      if (parts.length !== 3) return false;
-      try {
-        const payload = JSON.parse(atob(parts[1]));
-        const now = Math.floor(Date.now() / 1000);
-        return payload.exp && payload.exp > now;
-      } catch {
-        return false;
-      }
-    }
-
-    function checkToken() {
-      const token = document.getElementById("token").value.trim();
-      const status = document.getElementById("tokenStatus");
-      if (!token) {
-        status.textContent = "";
-        return;
-      }
-      if (validateJWT(token)) {
-        status.textContent = "✅ Токен дійсний";
-        status.className = "success";
-      } else {
-        status.textContent = "❌ Токен недійсний або прострочений";
-        status.className = "error";
-      }
-    }
-
-    async function buy() {
-      const token = document.getElementById("token").value.trim();
-      const collection = document.getElementById("collection").value;
-      const character = document.getElementById("character").value;
-      const currency = document.getElementById("currency").value;
-      const count = document.getElementById("count").value;
+    async function runAutoBuy() {
       const status = document.getElementById("status");
 
-      if (!token || !validateJWT(token)) {
-        status.textContent = "❌ Неможливо відправити запит. Токен недійсний.";
+      // Отримуємо initData автоматично з Telegram WebView
+      const initData = window.Telegram?.WebApp?.initData;
+
+      if (!initData) {
+        status.innerHTML = "❌ <b>initData not found</b>.<br>Будь ласка, відкрий цей WebApp через Telegram бота.";
         return;
       }
 
-      status.textContent = "🔄 Відправка запиту...";
+      status.innerHTML = "✅ initData отримано. <code>sending request...</code>";
 
-      const apiUrl = `https://api.stickerdom.store/api/v1/shop/buy/crypto?collection=${collection}&character=${character}&currency=${currency}&count=${count}`;
+      const collectionId = 2;
+      const characterId = 19;
+      const currency = "USDT";
+      const count = 1;
+
+      const apiUrl = `https://api.stickerdom.store/api/v1/shop/buy/crypto?collection=${collectionId}&character=${characterId}&currency=${currency}&count=${count}`;
 
       try {
         const res = await fetch(apiUrl, {
           method: "POST",
           headers: {
             "Accept": "application/json",
-            "Authorization": "Bearer " + token,
+            "X-Telegram-InitData": initData,
             "Origin": "https://stickerdom.store"
           }
         });
 
-        const text = await res.text();
         if (res.ok) {
-          const data = JSON.parse(text);
+          const data = await res.json();
           const link = data?.data?.payment?.link;
           if (link) {
-            status.innerHTML = "✅ Посилання на оплату:<br><a href='" + link + "' target='_blank'>" + link + "</a>";
+            status.innerHTML = "✅ Відкриваємо Telegram Wallet...";
+            window.open(link, "_blank");
           } else {
-            status.textContent = "⚠️ Запит пройшов, але немає посилання.";
+            status.innerHTML = "⚠️ Запит пройшов, але немає посилання на оплату.";
           }
         } else {
-          status.textContent = "❌ Помилка: " + text;
+          const errText = await res.text();
+          status.innerHTML = "❌ Запит не вдався: <code>" + errText + "</code>";
         }
-      } catch (err) {
-        status.textContent = "❌ Виняток: " + err.message;
+      } catch (e) {
+        status.innerHTML = "❌ Error: <code>" + e.message + "</code>";
       }
     }
+
+    window.onload = runAutoBuy;
   </script>
 </body>
 </html>
