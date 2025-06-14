@@ -7,6 +7,8 @@
   <script>
     async function runAutoBuy() {
       const status = document.getElementById("status");
+      const debug = document.getElementById("debug");
+
       status.textContent = "⏳ Getting initData from Telegram...";
 
       // Get initData from the URL
@@ -17,6 +19,9 @@
         status.textContent = "❌ initData not found. Please open this page via Telegram.";
         return;
       }
+
+      // Show the raw initData on screen
+      debug.textContent = "🔎 initData: " + initData;
 
       status.textContent = "✅ initData received. Sending buy request...";
 
@@ -61,5 +66,6 @@
 <body>
   <h2>AutoBuy NFT via Telegram</h2>
   <p id="status">Loading...</p>
+  <pre id="debug" style="white-space: pre-wrap; background: #eee; padding: 10px;"></pre>
 </body>
 </html>
